@@ -19,6 +19,7 @@ Show any code that is needed to
 unzip("activity.zip")
 activity <- read.csv("activity.csv")
 library(lubridate)
+activity$date <- as.Date(activity$date)
 #activity$time <- (strptime(paste(date, as.character(interval)), "%Y-%m-%d %H%M"))
 print(names(activity))
 ```
@@ -120,7 +121,7 @@ stepsPerDate <- aggregate(steps ~ date, newActivity, sum, na.rm=T)
 meanStepsPerDay <- mean(stepsPerDate$steps)
 medianStepsPerDay <- median(stepsPerDate$steps)
 #Plot the histogram
-hist(stepsPerDate$steps, breaks = 1000 * (0:22), main = "Frequency of steps per day", xlab = "Steps per day")
+hist(stepsPerDate$steps, breaks = 1000 * (0:22), main = "Frequency of steps per day (with imputed values)", xlab = "Steps per day")
 abline(v = meanStepsPerDay, col = "blue", lw = 2)
 ```
 
@@ -143,3 +144,34 @@ cat("The median is", medianStepsPerDay, "steps.")
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+```r
+#Weekday or weekend
+kindOfDay <- function(date){
+  sat = weekdays(as.Date("2015-01-03"))
+  sun = weekdays(as.Date("2015-01-04"))
+  if(weekdays(date) %in% c(sat, sun)){
+    return("weekend")}
+  else{
+    return("weekday")}
+  }
+for(i in 1:nrow(newActivity)){
+  newActivity$kindOfDay[i] <- kindOfDay(as.Date(newActivity$date[i]))}
+
+
+stepsPerInterval <- aggregate(steps ~ interval + kindOfDay, newActivity, mean, na.rm=T)
+stepsPerInterval$newInterval <- as.character(sprintf("%04d", stepsPerInterval$interval))
+stepsPerInterval$time <- strptime(stepsPerInterval$newInterval, "%H%M")
+
+par(mfrow=c(1, 2))
+
+with(stepsPerInterval[stepsPerInterval$kindOfDay == "weekday",], plot(time, steps, type="l", xlab="Hour", ylab="Mean number of steps", ylim=c(0, 250), main="Weekdays"))
+with(stepsPerInterval[stepsPerInterval$kindOfDay == "weekend",], plot(time, steps, type="l", xlab="Hour", ylab="Mean number of steps", ylim=c(0, 250), main="Weekends"))
+```
+
+![](PA1_template_files/figure-html/week-1.png) 
